@@ -13,7 +13,16 @@ private enum class FanSpeed (val label : Int){
     OFF(R.string.fan_off),
     LOW(R.string.fan_low),
     MEDIUM(R.string.fan_medium),
-    HIGH(R.string.fan_high)
+    HIGH(R.string.fan_high);
+
+    //extension function to change current fan speed to next fan speed
+    fun next() = when (this){
+        OFF -> LOW
+        LOW -> MEDIUM
+        MEDIUM -> HIGH
+        HIGH -> OFF
+    }
+
 }
 
 private const val RADIUS_OFFSET_LABEL = 30
@@ -41,6 +50,29 @@ class DialView @JvmOverloads constructor(
 
     }
 
+    //to set default properties of a view
+    init {
+        isClickable = true //view is clickable
+    }
+
+    /**
+     * This allow us to handle click on the view (isClickable = true in init())
+     * changes fanspeed and redraws the view to display change
+     *
+     * NOTE : we can add onclicklistener to view later as --> super.performClick calls onclicklistener
+     */
+    override fun performClick(): Boolean {
+        //must happen first, which enables accessibility events as well as calls onClickListener().
+        if(super.performClick()) return true
+
+        //change fan speed to next on click
+        fanSpeed = fanSpeed.next()
+        contentDescription = resources.getString(fanSpeed.label)
+
+        //invalidate entire view - forcing onDraw() to draw it again
+        invalidate()
+        return true
+    }
 
     /**
      * called every time view size changes
@@ -66,21 +98,27 @@ class DialView @JvmOverloads constructor(
         y = (radius * sin(angle)).toFloat() + height/2
     }
 
+    /**
+     * Renders the view on screen with Canvas and Paint classes
+     * @param canvas , screen canvas
+     */
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        //set dial bkg color to green if selection not off
+
+        // Set dial background color to green if selection not off.
         paint.color = if (fanSpeed == FanSpeed.OFF) Color.GRAY else Color.GREEN
-        //Draw the dial
-        //the "width" and "height" properties are the members of the view superclass
-        canvas.drawCircle((width/2).toFloat(),(height/2).toFloat(), radius, paint)
-        //Draw the indicator circle
+        // Draw the dial.
+        canvas.drawCircle((width / 2).toFloat(), (height / 2).toFloat(), radius, paint)
+
+        // Draw the indicator circle.
         val markerRadius = radius + RADIUS_OFFSET_INDICATOR
-        pointPosition.computeXYForSpeed(fanSpeed,markerRadius)
+        pointPosition.computeXYForSpeed(fanSpeed, markerRadius)
         paint.color = Color.BLACK
         canvas.drawCircle(pointPosition.x, pointPosition.y, radius/12, paint)
-        //Draw test labels
+
+        // Draw the text labels.- 4 times
         val labelRadius = radius + RADIUS_OFFSET_LABEL
-        for (i in FanSpeed.values()){
+        for (i in FanSpeed.values()) {
             pointPosition.computeXYForSpeed(i, labelRadius)
             val label = resources.getString(i.label)
             canvas.drawText(label, pointPosition.x, pointPosition.y, paint)

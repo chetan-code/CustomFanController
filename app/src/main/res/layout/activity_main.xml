@@ -25,7 +25,6 @@
         android:id="@+id/dialView"
         android:layout_width="@dimen/fan_dimen"
         android:layout_height="@dimen/fan_dimen"
-        android:background="@android:color/darker_gray"
         app:layout_constraintTop_toBottomOf="@+id/customViewLabel"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
