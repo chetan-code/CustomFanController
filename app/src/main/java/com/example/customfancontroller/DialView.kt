@@ -4,7 +4,11 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.core.content.withStyledAttributes
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -51,8 +55,6 @@ class DialView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
         textSize = 55.0f
         typeface = Typeface.create("", Typeface.BOLD)
-
-
     }
 
     //to set default properties of a view
@@ -65,6 +67,23 @@ class DialView @JvmOverloads constructor(
             fanSpeedMediumColor = getColor(R.styleable.DialView_fanColor2,0)
             fanSpeedMaxColor = getColor(R.styleable.DialView_fanColor3,0)
         }
+
+        updateContentDescription()
+
+        //accessibility feature - help in explaining what action to take
+        ViewCompat.setAccessibilityDelegate(this , object : AccessibilityDelegateCompat(){
+            override fun onInitializeAccessibilityNodeInfo(
+                host: View,
+                info: AccessibilityNodeInfoCompat
+            ) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                val customClick = AccessibilityNodeInfoCompat.AccessibilityActionCompat(
+                    AccessibilityNodeInfo.ACTION_CLICK,
+                    context.getString(if (fanSpeed != FanSpeed.HIGH) R.string.change else R.string.reset)
+                )
+                info.addAction(customClick)
+            }
+        })
     }
 
     /**
@@ -79,8 +98,8 @@ class DialView @JvmOverloads constructor(
 
         //change fan speed to next on click
         fanSpeed = fanSpeed.next()
-        contentDescription = resources.getString(fanSpeed.label)
-
+        //tell talkback
+        updateContentDescription()
         //invalidate entire view - forcing onDraw() to draw it again
         invalidate()
         return true
@@ -140,5 +159,13 @@ class DialView @JvmOverloads constructor(
             val label = resources.getString(i.label)
             canvas.drawText(label, pointPosition.x, pointPosition.y, paint)
         }
+    }
+
+    /**
+     * content description allow us to make view accessible for visually impaired people
+     * we need to update the fanspeed description on click
+     */
+    fun updateContentDescription(){
+        contentDescription = resources.getString(fanSpeed.label)
     }
 }
